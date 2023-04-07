@@ -1,6 +1,7 @@
 local Players = game:GetService("Players")
 
 local BEAM_LENGTH = 10
+local isTransparent = false -- added boolean value
 
 function onCharacterAdded(character)
     local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
@@ -11,6 +12,7 @@ function onCharacterAdded(character)
     beam.BrickColor = BrickColor.Random()
     beam.Material = Enum.Material.Neon
     beam.CanCollide = false
+    beam.Transparency = isTransparent and 0.5 or 0 -- toggle transparency based on boolean value
     beam.Parent = humanoidRootPart
     beam.CFrame = CFrame.new(humanoidRootPart.Position) * CFrame.Angles(0, math.pi/2, 0) * CFrame.new(0, 0, -BEAM_LENGTH/2)
 
@@ -62,3 +64,28 @@ end)
 -- get the player's character
 local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
+
+-- toggle transparency with boolean value
+local userInputService = game:GetService("UserInputService")
+local toggleTransparency = false
+
+userInputService.InputBegan:Connect(function(input, gameProcessedEvent)
+    if input.KeyCode == Enum.KeyCode.T then
+        toggleTransparency = true
+        while toggleTransparency do
+            isTransparent = not isTransparent
+            for _, beam in ipairs(character:GetDescendants()) do
+                if beam.Name == "HeadBeam" then
+                    beam.Transparency = isTransparent and 0.5 or 0
+                end
+            end
+            wait(0.15)
+        end
+    end
+end)
+
+userInputService.InputEnded:Connect(function(input, gameProcessedEvent)
+    if input.KeyCode == Enum.KeyCode.T then
+        toggleTransparency = false
+    end
+end)
