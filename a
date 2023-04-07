@@ -1,0 +1,64 @@
+local Players = game:GetService("Players")
+
+local BEAM_LENGTH = 10
+
+function onCharacterAdded(character)
+    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+    
+    local beam = Instance.new("Part")
+    beam.Name = "HeadBeam"
+    beam.Size = Vector3.new(0.5, 0.5, BEAM_LENGTH)
+    beam.BrickColor = BrickColor.Random()
+    beam.Material = Enum.Material.Neon
+    beam.CanCollide = false
+    beam.Parent = humanoidRootPart
+    beam.CFrame = CFrame.new(humanoidRootPart.Position) * CFrame.Angles(0, math.pi/2, 0) * CFrame.new(0, 0, -BEAM_LENGTH/2)
+
+    local weld = Instance.new("Weld")
+    weld.Part0 = humanoidRootPart
+    weld.Part1 = beam
+    weld.C0 = CFrame.new(0, 1.5, -5)
+
+    weld.Parent = humanoidRootPart
+
+    humanoidRootPart.ChildRemoved:Connect(function(child)
+        if child == beam then
+            weld:Destroy()
+        end
+    end)
+
+    humanoidRootPart:GetPropertyChangedSignal("Parent"):Connect(function()
+        if not humanoidRootPart.Parent then
+            beam:Destroy()
+        end
+    end)
+
+    local function updateBeamOrientation()
+        local lookVector = humanoidRootPart.CFrame.LookVector
+        lookVector = Vector3.new(lookVector.X, 0, lookVector.Z).Unit
+        beam.CFrame = CFrame.new(humanoidRootPart.Position) * CFrame.Angles(0, math.pi/2, 0) * CFrame.new(0, 0, -BEAM_LENGTH/2) * CFrame.fromOrientation(math.atan2(lookVector.X, -lookVector.Z), 0, 0)
+    end
+
+    updateBeamOrientation()
+    humanoidRootPart:GetPropertyChangedSignal("CFrame"):Connect(updateBeamOrientation)
+end
+
+for _, player in ipairs(Players:GetPlayers()) do
+    if player.Character then
+        onCharacterAdded(player.Character)
+    end
+
+    player.CharacterAdded:Connect(function(character)
+        onCharacterAdded(character)
+    end)
+end
+
+Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function(character)
+        onCharacterAdded(character)
+    end)
+end)
+
+-- get the player's character
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
